@@ -254,10 +254,9 @@
 
         function generateCards() {
             const container = document.getElementById('card-container');
-            let cardArray = [...cardImages, ...cardImages]; // Duplicate images for matching pairs
-            cardArray.sort(() => 0.5 - Math.random()); // Shuffle the array
+            const cardImagesShuffled = [...cardImages, ...cardImages].sort(() => Math.random() - 0.5);
 
-            cardArray.forEach(image => {
+            cardImagesShuffled.forEach(image => {
                 const card = document.createElement('div');
                 card.classList.add('card');
 
