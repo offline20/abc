@@ -51,10 +51,10 @@
         }
 
         .stats img.icon {
-            width: 20px; /* Adjust size as needed */
-            height: 20px; /* Adjust size as needed */
-            margin-right: 8px; /* Space between icon and text */
-            vertical-align: middle; /* Align icon with text */
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
         }
 
         .container {
@@ -152,9 +152,9 @@
         }
 
         .stars img {
-            width: 25px; /* Adjust size as needed */
-            height: 25px; /* Adjust size as needed */
-            margin: 0 5px; /* Space between stars */
+            width: 25px;
+            height: 25px;
+            margin: 0 5px;
         }
     </style>
 </head>
@@ -162,7 +162,7 @@
 <body>
     <!-- Audio Elements -->
     <audio id="background-audio" src="../audio/background.mp3" autoplay loop></audio>
-    <audio id="level-audio" src="../audio/level."></audio>
+    <audio id="level-audio" src="../audio/level.mp3"></audio>
 
     <h1>Memory Card Game - Level 1</h1>
 
@@ -273,52 +273,41 @@
 
             for (let i = 0; i < starCount; i++) {
                 const img = document.createElement('img');
-                img.src = `../images/star${starCount}.png`; // Star images: star1.png, star2.png, star3.png
-                img.alt = `star${i + 1}`;
+                img.src = `../images/star${starCount}.png`;
                 starsContainer.appendChild(img);
             }
 
             overlay.style.display = 'block';
             modal.style.display = 'block';
-            levelAudio.play(); // Play level completion sound
+            levelAudio.play();
+            backgroundAudio.pause(); // Pause background music when the level is completed
         }
-
-        function hideModal() {
-            overlay.style.display = 'none';
-            modal.style.display = 'none';
-        }
-
-        playAgainButton.addEventListener('click', () => {
-            hideModal();
-            location.reload(); // Refresh the page to restart the game
-        });
-
-        homeButton.addEventListener('click', () => {
-            window.location.href = 'index.html'; // Redirect to home page
-        });
 
         function flipCard() {
             if (lockBoard) return;
-            if (this === firstCard) return;
-
             this.classList.add('flipped');
+
             if (!firstCard) {
                 firstCard = this;
                 return;
             }
+
             secondCard = this;
             checkForMatch();
         }
 
         function checkForMatch() {
-            let isMatch = firstCard.innerHTML === secondCard.innerHTML;
-
-            if (isMatch) {
+            if (firstCard.innerHTML === secondCard.innerHTML) {
                 disableCards();
             } else {
                 unflipCards();
                 incorrectMoves++;
                 mistakesElement.textContent = incorrectMoves;
+            }
+
+            if (document.querySelectorAll('.card.flipped').length === cardImages.length * 2) {
+                stopTimer();
+                setTimeout(showModal, 1000); // Show modal after a delay
             }
         }
 
@@ -326,10 +315,6 @@
             firstCard.removeEventListener('click', flipCard);
             secondCard.removeEventListener('click', flipCard);
             resetBoard();
-            if (document.querySelectorAll('.card.flipped').length === document.querySelectorAll('.card').length) {
-                stopTimer();
-                showModal();
-            }
         }
 
         function unflipCards() {
@@ -338,7 +323,7 @@
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
                 resetBoard();
-            }, 1500);
+            }, 1000);
         }
 
         function resetBoard() {
@@ -346,12 +331,16 @@
             lockBoard = false;
         }
 
-        // Start the timer and background music when the page loads
-        window.onload = () => {
-            generateCards();
-            startTimer();
-            backgroundAudio.play(); // Play background music
-        };
+        playAgainButton.addEventListener('click', () => {
+            window.location.reload(); // Reload the game for a new attempt
+        });
+
+        homeButton.addEventListener('click', () => {
+            window.location.href = 'https://github.com/offline20/abc/blob/06116a5663981f472f2bf507b30da9ce2eb6bec8/index.html'; // Redirect to the GitHub URL
+        });
+
+        generateCards();
+        startTimer();
     </script>
 </body>
 
