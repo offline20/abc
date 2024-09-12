@@ -18,7 +18,7 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background-image: url('../images/background.jpg');
+            background-image: url('../images/background.jpg'); /* Background image */
             background-size: cover;
             background-position: center;
         }
@@ -73,7 +73,7 @@
             position: relative;
             perspective: 1000px;
             cursor: pointer;
-            border: 2px solid rgba(255, 165, 0, 0.5); /* Transparent orange border */
+            border: 2px solid rgba(0, 0, 0, 0.5); /* Transparent orange border */
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
@@ -151,34 +151,44 @@
             z-index: 500;
         }
 
+        .settings-icon {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #ffffff;
+            z-index: 1001;
+        }
+
+        .settings-panel {
+            display: none;
+            position: fixed;
+            top: 50px; /* Adjust to ensure it is visible */
+            right: 10px;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            z-index: 1002;
+            text-align: center;
+            width: 200px;
+            box-sizing: border-box;
+        }
+
+        .settings-panel label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .settings-panel input[type="range"] {
+            width: 100%;
+        }
+
         .stars img {
             width: 25px;
             height: 25px;
             margin: 0 5px;
-        }
-
-        .settings-icon {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            cursor: pointer;
-            width: 40px; /* Adjust size as needed */
-        }
-
-        .volume-slider {
-            display: none;
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            background-color: #ffffff;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-        }
-
-        .volume-slider input[type="range"] {
-            width: 100px;
         }
     </style>
 </head>
@@ -187,15 +197,6 @@
     <!-- Audio Elements -->
     <audio id="background-audio" src="../audio/background.mp3" autoplay loop></audio>
     <audio id="level-audio" src="../audio/level.mp3"></audio>
-
-    <!-- Settings Icon -->
-    <img src="../images/setting.png" alt="settings icon" class="settings-icon" id="settings-icon">
-
-    <!-- Volume Slider -->
-    <div class="volume-slider" id="volume-slider">
-        <p>Adjust Volume:</p>
-        <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
-    </div>
 
     <h1>Memory Card Game - Level 1</h1>
 
@@ -220,6 +221,15 @@
         <button id="home">Home</button>
     </div>
 
+    <div class="settings-icon" id="settings-icon">
+        <i class="fas fa-cog"></i> <!-- Settings icon -->
+    </div>
+
+    <div class="settings-panel" id="settings-panel">
+        <label for="volume-slider">Background Volume:</label>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
+    </div>
+
     <script>
         let timerElement = document.getElementById('timer');
         let mistakesElement = document.getElementById('mistakes');
@@ -232,8 +242,8 @@
         let homeButton = document.getElementById('home');
         let backgroundAudio = document.getElementById('background-audio');
         let levelAudio = document.getElementById('level-audio');
-        let volumeControl = document.getElementById('volume-control');
         let settingsIcon = document.getElementById('settings-icon');
+        let settingsPanel = document.getElementById('settings-panel');
         let volumeSlider = document.getElementById('volume-slider');
         let seconds = 0;
         let minutes = 0;
@@ -254,9 +264,10 @@
 
         function generateCards() {
             const container = document.getElementById('card-container');
-            const cardImagesShuffled = [...cardImages, ...cardImages].sort(() => Math.random() - 0.5);
+            let cardArray = [...cardImages, ...cardImages]; // Duplicate images for matching pairs
+            cardArray.sort(() => 0.5 - Math.random()); // Shuffle the array
 
-            cardImagesShuffled.forEach(image => {
+            cardArray.forEach(image => {
                 const card = document.createElement('div');
                 card.classList.add('card');
 
@@ -280,11 +291,11 @@
         function startTimer() {
             timer = setInterval(() => {
                 seconds++;
-                if (seconds >= 60) {
+                if (seconds === 60) {
                     seconds = 0;
                     minutes++;
                 }
-                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }, 1000);
         }
 
@@ -292,10 +303,34 @@
             clearInterval(timer);
         }
 
+        function showModal() {
+            finalTimeElement.textContent = timerElement.textContent;
+            finalMistakesElement.textContent = mistakesElement.textContent;
+            starsContainer.innerHTML = ''; // Clear previous stars
+
+            let starCount = 1;
+            if (minutes === 0 && seconds <= 30) {
+                starCount = 3;
+            } else if (minutes === 0 && seconds <= 60) {
+                starCount = 2;
+            } else {
+                starCount = 1;
+            }
+
+            for (let i = 0; i < starCount; i++) {
+                const img = document.createElement('img');
+                img.src = `../images/star${starCount}.png`;
+                starsContainer.appendChild(img);
+            }
+
+            overlay.style.display = 'block';
+            modal.style.display = 'block';
+            levelAudio.play();
+            backgroundAudio.pause(); // Pause background music when the level is completed
+        }
+
         function flipCard() {
             if (lockBoard) return;
-            if (this === firstCard) return;
-
             this.classList.add('flipped');
 
             if (!firstCard) {
@@ -304,14 +339,22 @@
             }
 
             secondCard = this;
-
             checkForMatch();
         }
 
         function checkForMatch() {
-            let isMatch = firstCard.querySelector('.back-view img').src === secondCard.querySelector('.back-view img').src;
+            if (firstCard.innerHTML === secondCard.innerHTML) {
+                disableCards();
+            } else {
+                unflipCards();
+                incorrectMoves++;
+                mistakesElement.textContent = incorrectMoves;
+            }
 
-            isMatch ? disableCards() : unflipCards();
+            if (document.querySelectorAll('.card.flipped').length === cardImages.length * 2) {
+                stopTimer();
+                setTimeout(showModal, 1000); // Show modal after a delay
+            }
         }
 
         function disableCards() {
@@ -326,53 +369,28 @@
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
                 resetBoard();
-            }, 1500);
+            }, 1000);
         }
 
         function resetBoard() {
-            [firstCard, secondCard, lockBoard] = [null, null, false];
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
         }
 
-        function showModal() {
-            stopTimer();
-            finalTimeElement.textContent = timerElement.textContent;
-            finalMistakesElement.textContent = incorrectMoves;
-            displayStars();
-            overlay.style.display = 'block';
-            modal.style.display = 'block';
-            levelAudio.play();
-        }
-
-        function displayStars() {
-            let stars = '';
-            const time = minutes * 60 + seconds;
-            if (time <= 30) {
-                stars = '<img src="../images/star3.png" alt="star"> <img src="../images/star3.png" alt="star"> <img src="../images/star3.png" alt="star">';
-            } else if (time <= 60) {
-                stars = '<img src="../images/star2.png" alt="star"> <img src="../images/star2.png" alt="star"> <img src="../images/star1.png" alt="star">';
-            } else {
-                stars = '<img src="../images/star1.png" alt="star"> <img src="../images/star1.png" alt="star"> <img src="../images/star1.png" alt="star">';
-            }
-            starsContainer.innerHTML = stars;
-        }
-
-        function playAgain() {
-            window.location.reload();
-        }
-
-        function goHome() {
-            window.location.href = 'index.html';
-        }
-
-        playAgainButton.addEventListener('click', playAgain);
-        homeButton.addEventListener('click', goHome);
-
-        settingsIcon.addEventListener('click', () => {
-            volumeSlider.style.display = volumeSlider.style.display === 'none' ? 'block' : 'none';
+        playAgainButton.addEventListener('click', () => {
+            window.location.reload(); // Reload the game for a new attempt
         });
 
-        volumeControl.addEventListener('input', () => {
-            backgroundAudio.volume = volumeControl.value;
+        homeButton.addEventListener('click', () => {
+            window.location.href = 'https://offline20.github.io/abc/'; // Redirect to the GitHub URL
+        });
+
+        settingsIcon.addEventListener('click', () => {
+            settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
+        });
+
+        volumeSlider.addEventListener('input', () => {
+            backgroundAudio.volume = volumeSlider.value;
         });
 
         generateCards();
